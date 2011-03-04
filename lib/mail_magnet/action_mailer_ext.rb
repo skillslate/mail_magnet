@@ -4,8 +4,9 @@ ActionMailer::Base.class_eval do
   cattr_accessor :override_recipients
 
   def deliver_with_override!(mail = @mail)
-    if override_recipients.present?
-      mail.override_recipients! override_recipients
+    override_recips = override_recipients.respond_to?(:call) ? override_recipients.call(mail) : override_recipients
+    if override_recips.present?
+      mail.override_recipients! override_recips
     end
     deliver_without_override! mail
   end

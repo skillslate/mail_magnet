@@ -24,12 +24,13 @@ describe 'mail_magnet' do
     ActionMailer::Base.deliveries.last.bcc.should == overrides
   end
 
-  it 'should put the original recipients, cc and bcc into the mail body' do
-    ActionMailer::Base.override_recipients = 'overridden.to@example.com'
+  it 'should allow a proc as the override recipients' do
+    overrides = lambda{|m| %w[ overridden.to@example.com] }
+    ActionMailer::Base.override_recipients = overrides
     Mailer.deliver_letter
-    ActionMailer::Base.deliveries.last.body.should include('To: original.to@example.com')
-    ActionMailer::Base.deliveries.last.body.should include('Cc: original.cc@example.com')
-    ActionMailer::Base.deliveries.last.body.should include('Bcc: original.bcc@example.com')
+    ActionMailer::Base.deliveries.last.to.should == %w[ overridden.to@example.com]
+    ActionMailer::Base.deliveries.last.cc.should == %w[ overridden.to@example.com]
+    ActionMailer::Base.deliveries.last.bcc.should ==%w[ overridden.to@example.com]
   end
 
   it 'should leave original recipients untouched if it is not activated' do
@@ -51,18 +52,6 @@ describe 'mail_magnet' do
     ActionMailer::Base.deliveries.last.content_type.should == "text/plain"
     Mailer.deliver_html_letter
     ActionMailer::Base.deliveries.last.content_type.should include("text/html") # content_type sometimes ends with "; charset=utf-8"
-  end
-
-  it 'should use "\n" for line breaks in plain text emails' do
-    ActionMailer::Base.override_recipients = 'overridden.to@example.com'
-    Mailer.deliver_letter
-    ActionMailer::Base.deliveries.last.body.should include("To: original.to@example.com\n")
-  end
-
-  it 'should use "<br />" for line breaks in HTML emails' do
-    ActionMailer::Base.override_recipients = 'overridden.to@example.com'
-    Mailer.deliver_html_letter
-    ActionMailer::Base.deliveries.last.body.should include('To: original.to@example.com<br />')
   end
 
 end
